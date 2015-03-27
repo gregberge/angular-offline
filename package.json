@@ -1,0 +1,19 @@
+{
+  "name": "angular-offline",
+  "version": "0.0.0",
+  "description": "Offline support for AngularJS applications.",
+  "main": "angular-offline.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neoziro/angular-offline.git"
+  },
+  "author": "Greg Bergé <berge.greg@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/neoziro/angular-offline/issues"
+  },
+  "homepage": "https://github.com/neoziro/angular-offline",
+  "devDependencies": {
+    "express": "^4.12.3"
+  }
+}
