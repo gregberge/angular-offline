@@ -91,9 +91,6 @@ module.run(function (connectionStatus) {
 });
 ```
 
-
-### connectionStatus.$on()
-
 ## Use with angular-cache
 
 If you want to build an application completely offline, you will need a cache that can be stored in the localStorage. To do that, the recommended method is to use [angular-cache](https://github.com/jmdobry/angular-cache).
