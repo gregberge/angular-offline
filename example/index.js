@@ -4,7 +4,9 @@ var express = require('express');
 var app = express();
 
 app.use(express.static(__dirname));
-app.use('/angular-offline.js', express.static(path.join(__dirname, '../angular-offline.js'), {etag: false, maxAge: 30000000}));
+app.use('/angular-offline.js', express.static(path.join(__dirname, '../angular-offline.js')));
+app.use('/angular-offline.min.js', express.static(path.join(__dirname, '../angular-offline.min.js')));
+app.use('/angular-offline.min.js.map', express.static(path.join(__dirname, '../angular-offline.min.js.map')));
 app.use('/bower_components', express.static(path.join(__dirname, '../bower_components')));
 app.get('/test.json', function (req, res) {
   res.send({foo: 'bar'});

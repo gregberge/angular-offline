@@ -251,9 +251,9 @@ angular
   }];
 })
 .config(['$provide', '$httpProvider', function ($provide, $httpProvider) {
-  $provide.factory('offlineInterceptor', function (offline) {
+  $provide.factory('offlineInterceptor', ['offline', function (offline) {
     return offline.interceptors;
-  });
+  }]);
 
   $httpProvider.interceptors.push('offlineInterceptor');
 }]);
