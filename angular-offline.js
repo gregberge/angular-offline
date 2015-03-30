@@ -1,3 +1,4 @@
+/*! Angular offline v0.0.0 | (c) 2013 Greg Bergé | License MIT */
 angular
 .module('offline', [])
 .service('connectionStatus', function ($window, $rootScope) {
