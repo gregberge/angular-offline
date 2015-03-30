@@ -4,8 +4,21 @@
     <meta charset="utf-8">
     <title>Angular offline application</title>
   </head>
-  <body>
-    Hello world!
+  <body ng-controller="MainCtrl">
+
+    <button ng-click="toggleOnline()">
+      <span ng-show="isOnline()">Put offline</span>
+      <span ng-show="!isOnline()">Put online</span>
+    </button>
+
+    <button ng-click="makePOST()">
+      Make POST
+    </button>
+
+    <button ng-click="makeGET()">
+      Make GET
+    </button>
+
     <script src="/bower_components/angular/angular.js"></script>
     <script src="/bower_components/angular-cache/dist/angular-cache.js"></script>
     <script src="/angular-offline.js"></script>

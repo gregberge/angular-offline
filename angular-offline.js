@@ -1,7 +1,33 @@
 angular
-.module('offline', ['angular-cache'])
+.module('offline', [])
+.service('connectionStatus', function ($window, $rootScope) {
+
+  /**
+   * Test if the connection is online.
+   *
+   * @returns {boolean}
+   */
+
+  this.isOnline = function () {
+    return $window.navigator.onLine;
+  };
+
+  /**
+   * Listen online and offline events.
+   *
+   * @param {string} event
+   * @param {function} listener
+   */
+
+  this.$on = function (event, listener) {
+    $window.addEventListener(event, function () {
+      $rootScope.$apply(listener);
+    });
+  };
+})
 .provider('offline', function () {
   var offlineProvider = this;
+  var $requester;
 
   /**
    * Enable or disable debug mode.
@@ -15,7 +41,9 @@ angular
     return this;
   };
 
-  this.$get = function ($q, $window, $log, CacheFactory) {
+  this.$get = function ($q, $window, $log, connectionStatus, $cacheFactory) {
+    var offline = {};
+    var defaultStackCache = $cacheFactory('offline-request-stack');
 
     /**
      * Log in debug mode.
@@ -31,41 +59,6 @@ angular
     }
 
     /**
-     * Get or create a cache from key and options.
-     *
-     * @param {string} name
-     * @param {object} [options]
-     * @returns {object} cache
-     */
-
-    function getOrCreateCache(name, options) {
-      return CacheFactory.get(name) || CacheFactory.createCache(name, options);
-    }
-
-    /**
-     * Format the name of the cache.
-     *
-     * @param {object} options Options
-     * @param {object} [options.maxAge]
-     * @returns {object} cache
-     */
-
-    function formatCacheName(options) {
-      return options.maxAge ? 'offline-' + options.maxAge : 'offline-infinite';
-    }
-
-    /**
-     * Test if the navigator is online.
-     *
-     * @returns {boolean} online?
-     */
-
-    function isOnline() {
-      return window.location.toString().match('online');
-      return navigator.onLine;
-    }
-
-    /**
      * Clean cache if expired.
      *
      * @param {object} cache Cache
@@ -73,22 +66,11 @@ angular
      */
 
     function cleanIfExpired(cache, key) {
+      if (cache === true)
+        cache = $requester.defaults.cache || $cacheFactory.get('$http');
       var info = cache.info(key);
       if (info && info.isExpired)
         cache.remove(key);
-    }
-
-    /**
-     * Create an offline error.
-     *
-     * @param {string} message Error message
-     * @returns {Error}
-     */
-
-    function createError(message) {
-      var error = new Error(message);
-      error.offline = true;
-      return error;
     }
 
     /**
@@ -98,9 +80,7 @@ angular
      */
 
     function getStackCache() {
-      return getOrCreateCache('offline-request-stack', {
-        storageMode: 'localStorage'
-      });
+      return offline.stackCache || defaultStackCache;
     }
 
     /**
@@ -170,19 +150,18 @@ angular
     /**
      * Process next request from the stack.
      *
-     * @param {*} requester
      * @returns {Promise|null}
      */
 
-    function processNextRequest(requester) {
+    function processNextRequest() {
       var request = stackShift();
 
       if (!request)
-        return $q.reject(createError('empty stack'));
+        return $q.reject(new Error('empty stack'));
 
       log('will process request', request);
 
-      return requester(request)
+      return $requester(request)
         .then(function (response) {
           log('request success', response);
           return response;
@@ -195,17 +174,15 @@ angular
     /**
      * Process all the stack.
      *
-     * @param {*} requester
      * @returns {Promise}
      */
 
-    function processStack(requester) {
-      if (!isOnline())
+    offline.processStack = function () {
+      if (!connectionStatus.isOnline())
         return;
 
-      var recursiveProcess = angular.bind(null, processStack, requester);
-      return processNextRequest(requester)
-      .then(recursiveProcess)
+      return processNextRequest()
+      .then(offline.processStack)
       .catch(function (error) {
         if (error && error.message === 'empty stack') {
           log('all requests completed');
@@ -217,57 +194,58 @@ angular
           return;
         }
 
-        return recursiveProcess();
+        return offline.processStack();
       });
-    }
+    };
 
-    return {
-      run: function (requester) {
-        var processStackBinded = angular.bind(null, processStack, requester);
-        $window.addEventListener('online', processStackBinded);
-        processStackBinded();
-      },
-      interceptors: {
-        request: function (config) {
-          // If there is not offline options, do nothing.
-          if (!config.offline)
-            return config;
+    /**
+     * Run offline using a requester ($http).
+     *
+     * @param {$http} requester
+     */
 
-          if (!angular.isUndefined(config.cache))
-            throw new Error('"cache" and "offline" options are not compatible');
+    offline.start = function (requester) {
+      $requester = requester;
+      connectionStatus.$on('online', offline.processStack);
+      offline.processStack();
+    };
 
-          // Default offline to an object.
-          if (!angular.isObject(config.offline))
-            config.offline = {};
+    /**
+     * Expose interceptors.
+     */
 
-          log('intercept request', config);
+    offline.interceptors = {
+      request: function (config) {
+        // If there is not offline options, do nothing.
+        if (!config.offline)
+          return config;
 
-          // For GET method, Angular will handle it.
-          if (config.method === 'GET') {
-            // Defaults options.
-            config.offline.deleteOnExpire = config.offline.deleteOnExpire || 'none';
-            config.offline.storageMode = config.offline.storageMode || 'localStorage';
+        log('intercept request', config);
 
-            // Create cache.
-            var cache = getOrCreateCache(formatCacheName(config.offline), config.offline);
+        // Automatically set cache to true.
+        if (!config.cache)
+          config.cache = true;
 
-            // Online we clean the cache.
-            if (isOnline())
-              cleanIfExpired(cache, config.url);
-
-            return angular.extend(config, {cache: cache});
-          }
-
-          // For other methods in offline mode, we will put them in wait.
-          if (!isOnline()) {
-            storeRequest(config);
-            return $q.reject(createError('request queued'));
-          }
+        // For GET method, Angular will handle it.
+        if (config.method === 'GET') {
+          // Online we clean the cache.
+          if (connectionStatus.isOnline())
+            cleanIfExpired(config.cache, config.url);
 
           return config;
         }
+
+        // For other methods in offline mode, we will put them in wait.
+        if (!connectionStatus.isOnline()) {
+          storeRequest(config);
+          return $q.reject(new Error('request queued'));
+        }
+
+        return config;
       }
-    }
+    };
+
+    return offline;
   };
 })
 .config(function ($provide, $httpProvider) {
@@ -276,7 +254,4 @@ angular
   });
 
   $httpProvider.interceptors.push('offlineInterceptor');
-})
-.run(function (offline, $http) {
-  offline.run($http);
 });

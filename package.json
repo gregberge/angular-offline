@@ -7,6 +7,10 @@
     "type": "git",
     "url": "https://github.com/neoziro/angular-offline.git"
   },
+  "scripts": {
+    "test": "./node_modules/karma/bin/karma start --single-run",
+    "example": "node example"
+  },
   "author": "Greg Bergé <berge.greg@gmail.com>",
   "license": "MIT",
   "bugs": {
@@ -14,6 +18,12 @@
   },
   "homepage": "https://github.com/neoziro/angular-offline",
   "devDependencies": {
-    "express": "^4.12.3"
+    "chai": "^2.2.0",
+    "express": "^4.12.3",
+    "karma": "^0.12.31",
+    "karma-chrome-launcher": "^0.1.7",
+    "karma-firefox-launcher": "^0.1.4",
+    "karma-mocha": "^0.1.10",
+    "mocha": "^2.2.1"
   }
 }
