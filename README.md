@@ -64,6 +64,36 @@ module.run(function (offline, $cacheFactory) {
 });
 ```
 
+### connectionStatus.isOnline()
+
+Test if the navigator is online.
+
+```js
+module.run(function (connectionStatus, $log) {
+  if (connectionStatus.isOnline())
+    $log.info('We have internet!');
+});
+```
+
+### connectionStatus.$on(event, listener)
+
+Listen "online" and "offline" events to get notified when the navigator become "online" or "offline". A `$rootScope.$apply` is automatically done.
+
+```js
+module.run(function (connectionStatus) {
+  connectionStatus.$on('online', function () {
+    $log.info('We are now online');
+  });
+
+  connectionStatus.$on('offline', function () {
+    $log.info('We are now offline');
+  });
+});
+```
+
+
+### connectionStatus.$on()
+
 ## Use with angular-cache
 
 If you want to build an application completely offline, you will need a cache that can be stored in the localStorage. To do that, the recommended method is to use [angular-cache](https://github.com/jmdobry/angular-cache).
