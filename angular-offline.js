@@ -1,7 +1,7 @@
 /*! Angular offline v0.0.0 | (c) 2013 Greg Bergé | License MIT */
 angular
 .module('offline', [])
-.service('connectionStatus', function ($window, $rootScope) {
+.service('connectionStatus', ['$window', '$rootScope', function ($window, $rootScope) {
 
   /**
    * Test if the connection is online.
@@ -25,7 +25,7 @@ angular
       $rootScope.$apply(listener);
     });
   };
-})
+}])
 .provider('offline', function () {
   var offlineProvider = this;
   var $requester;
@@ -42,7 +42,8 @@ angular
     return this;
   };
 
-  this.$get = function ($q, $window, $log, connectionStatus, $cacheFactory) {
+  this.$get = ['$q', '$window', '$log', 'connectionStatus', '$cacheFactory',
+  function ($q, $window, $log, connectionStatus, $cacheFactory) {
     var offline = {};
     var defaultStackCache = $cacheFactory('offline-request-stack');
 
@@ -247,12 +248,12 @@ angular
     };
 
     return offline;
-  };
+  }];
 })
-.config(function ($provide, $httpProvider) {
+.config(['$provide', '$httpProvider', function ($provide, $httpProvider) {
   $provide.factory('offlineInterceptor', function (offline) {
     return offline.interceptors;
   });
 
   $httpProvider.interceptors.push('offlineInterceptor');
-});
+}]);
