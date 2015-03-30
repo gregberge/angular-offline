@@ -8,6 +8,7 @@
     "url": "https://github.com/neoziro/angular-offline.git"
   },
   "scripts": {
+    "install": "bower install",
     "test": "./node_modules/karma/bin/karma start --single-run",
     "example": "node example"
   },

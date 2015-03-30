@@ -119,6 +119,7 @@ To play with the example, you can start it using the command `npm run example`, 
 
 ## Workflow
 
+```
 - Request GET
   -> interceptor.request
     -> has offline flag and is online
@@ -131,6 +132,7 @@ To play with the example, you can start it using the command `npm run example`, 
 
 - "online" event
   -> process stack
+```
 
 ## Browser support
 
